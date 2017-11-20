@@ -33,7 +33,6 @@ class ObjectDetectionReader:
         self._pad_value = pad_value
         self._randomize = randomize
         self._use_flipping = use_flipping
-        self._flip_image = True # will be set to False in the first call to _reset_reading_order
         self._proposal_provider = proposal_provider
         self._proposal_iou_threshold = proposal_iou_threshold
         self._provide_targets = provide_targets
@@ -65,15 +64,18 @@ class ObjectDetectionReader:
         '''
 
         index = self._get_next_image_index()
+        flip_image = False
+        if self._use_flipping: 
+            flip_image = random.choice([True, False])
         if DEBUG:
-            img_data, img_dims, resized_with_pad = self._load_resize_and_pad_image(index)
+            img_data, img_dims, resized_with_pad = self._load_resize_and_pad_image(index, flip_image)
         else:
-            img_data, img_dims = self._load_resize_and_pad_image(index)
-        roi_data = self._get_gt_annotations(index, img_dims)
+            img_data, img_dims = self._load_resize_and_pad_image(index, flip_image)
+        roi_data = self._get_gt_annotations(index, img_dims, flip_image)
         if DEBUG:
             self._debug_plot(resized_with_pad, roi_data)
 
-        proposals, label_targets, bbox_targets, bbox_inside_weights = self._get_proposals_and_targets(index, img_dims)
+        proposals, label_targets, bbox_targets, bbox_inside_weights = self._get_proposals_and_targets(index, img_dims, flip_image)
 
         return img_data, roi_data, img_dims, proposals, label_targets, bbox_targets, bbox_inside_weights
 
@@ -143,9 +145,6 @@ class ObjectDetectionReader:
         self._reading_order = np.arange(self._num_images)
         if self._randomize:
             np.random.shuffle(self._reading_order)
-        # if flipping should be used then we alternate between epochs from flipped to non-flipped
-        self._flip_image = not self._flip_image if self._use_flipping else False
-
         self._reading_index = 0
 
     def _read_image(self, image_path):
@@ -211,7 +210,7 @@ class ObjectDetectionReader:
         self._reading_index += 1
         return next_image_index
 
-    def _load_resize_and_pad_image(self, index):
+    def _load_resize_and_pad_image(self, index, flip_image):
         image_path = self._img_file_paths[index]
 
         img = self._read_image(image_path)
@@ -224,7 +223,7 @@ class ObjectDetectionReader:
         target_w, target_h, img_width, img_height, top, bottom, left, right, scale = self._img_stats[index]
 
         resized = cv2.resize(img, (target_w, target_h), 0, 0, interpolation=cv2.INTER_NEAREST)
-        if self._flip_image:
+        if flip_image:
             resized = cv2.flip(resized, 1)
 
         # transpose(2,0,1) converts the image to the HWC format which CNTK expects
@@ -235,21 +234,21 @@ class ObjectDetectionReader:
             return model_arg_rep, dims, resized
         return model_arg_rep, dims
 
-    def _get_gt_annotations(self, index, img_dims):
+    def _get_gt_annotations(self, index, img_dims, flip_image):
         annotations = self._gt_annotations[index]
-        if self._flip_image:
+        if flip_image:
             flipped_annotations = np.array(annotations)
             flipped_annotations[:,0] = img_dims[0] - annotations[:,2] - 1
             flipped_annotations[:,2] = img_dims[0] - annotations[:,0] - 1
             return flipped_annotations
         return annotations
 
-    def _get_proposals_and_targets(self, index, img_dims):
+    def _get_proposals_and_targets(self, index, img_dims, flip_image):
         if self._proposal_provider is None:
             return None, None, None, None
 
         proposals = self._proposal_dict[index]
-        if self._flip_image:
+        if flip_image:
             flipped_proposals = np.array(proposals, dtype=np.float32)
             flipped_proposals[:,0] = img_dims[0] - proposals[:,2] - 1
             flipped_proposals[:,2] = img_dims[0] - proposals[:,0] - 1
@@ -273,7 +272,7 @@ class ObjectDetectionReader:
 
             # TODO: double check this flipping of regression targets
             # apply flipping to x-position regression target
-            if self._flip_image:
+            if flip_image:
                 # TODO: check ::4
                 flipped_bbox_targets = np.array(bbox_targets, np.float32)
                 flipped_bbox_targets[:,0::4] = -bbox_targets[:,0::4]
