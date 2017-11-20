@@ -181,7 +181,6 @@ def create_faster_rcnn_model(features, scaled_gt_boxes, dims_input, cfg):
     # Load the pre-trained classification net and clone layers
     base_model = load_model(cfg['BASE_MODEL_PATH'])
     conv_layers = clone_conv_layers(base_model, cfg)
-    fc_layers = clone_model(base_model, [cfg["MODEL"].POOL_NODE_NAME], [cfg["MODEL"].LAST_HIDDEN_NODE_NAME], clone_method=CloneMethod.clone)
 
     if cfg["CNTK"].USE_DROPOUT:
         fc_layers = clone_model(base_model, [cfg["MODEL"].POOL_NODE_NAME], [cfg["MODEL"].LAST_HIDDEN_NODE_NAME], clone_method=CloneMethod.clone)
