@@ -54,7 +54,7 @@ def AttentionModel(attention_dim, attention_span=None, attention_axis=None,
     attn_final_stab = Stabilizer(enable_self_stabilization=enable_self_stabilization)
 
     if compatible_attention_mode:
-        warn('Specifying non-default values for attention_span and attention_axis has been deprecated since version 2.2. '
+        warn('Specifying non-default values for attention_span and attention_axis has been deprecated since version 2.3. '
              'These arguments will be removed in the future.', DeprecationWarning, stacklevel=2)
         # old attention function
         @Function

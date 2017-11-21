@@ -71,8 +71,8 @@ Linux GPU:
 
 ***2017-09-24.*** CNTK R-binding now available [here](https://github.com/Microsoft/CNTK-R).
 
-***2017-09-15.* CNTK 2.2**  
-Release of Cognitive Toolkit v2.2.
+***2017-11-22.* CNTK 2.3**  
+Release of Cognitive Toolkit v2.3.
 
 Hightlights:
 * NCCL 2 support

@@ -19,8 +19,8 @@ python install_data_and_model.py
 ```
 
 ### Build and Run Examples
-1. Install Nuget package CNTK.CPUOnly version v2.2.0 or higher for CSTrainingCPUOnlyExamples.
-2. Install Nuget package CNTK.GPU version v2.2.0 or higher for CSTrainingGPUExamples
+1. Install Nuget package CNTK.CPUOnly version v2.3.0 or higher for CSTrainingCPUOnlyExamples.
+2. Install Nuget package CNTK.GPU version v2.3.0 or higher for CSTrainingGPUExamples
 3. Run following examples:
 
 #### LogisticRegression
